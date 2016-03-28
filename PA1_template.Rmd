@@ -1,0 +1,121 @@
+---
+title: "PA1_template"
+author: "Wenhao Y"
+date: "March 8, 2016"
+output: html_document
+---
+
+
+## Loading and preprocessing the data
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+setwd(dir="C:/Users/sharon/Desktop")
+rm(list=ls())
+activity<- read.table(file="C:/Users/sharon/Desktop/activity.csv", header=TRUE, sep=",", colClasses=c("numeric", "character", "integer"))
+                      
+
+library(dplyr)
+library(lubridate)
+```
+
+
+## What is mean total number of steps taken per day?
+
+```{r}
+library(ggplot2)
+total.steps <- tapply(activity$steps, activity$date, FUN = sum, na.rm = TRUE)
+activity$date <- ymd(activity$date)
+mean(total.steps)  ##mean
+median(total.steps)  ##median
+
+steps <- activity %>%
+  filter(!is.na(steps)) %>%
+  group_by(date) %>%
+  summarize(steps = sum(steps)) %>%
+  print     
+
+##Histogram
+ggplot(steps, aes(x=date, y=steps))+geom_bar(stat="identity")+ xlab("Dates")+ ylab("Steps")+ labs(title= "Total numbers of Steps per day")
+
+```
+
+## What is the average daily activity pattern?
+
+```{R}
+##Steps per interval
+daypattern <- activity %>%
+  filter(!is.na(steps)) %>%
+  group_by(interval) %>%
+  summarize(steps=mean(steps)) %>%
+  print
+
+##time series plot
+plot(daypattern, type = "l")
+
+##Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+```
+
+
+## Imputing missing values
+```{R}
+##missing values
+missingvalue <- sum(is.na(activity))
+missingvalue
+
+##New dataset
+new <- activity %>%
+  group_by(interval) %>%
+  mutate(steps = ifelse(is.na(steps), mean(steps, na.rm=TRUE), steps))
+summary(new)
+
+
+new.steps <- new %>%
+  group_by(date) %>%
+  summarize(steps = sum(steps)) %>%
+  print   
+##new histogram
+ggplot(new.steps, aes(x=date, y=steps))+geom_bar(stat="identity")+ xlab("Dates")+ ylab("Imputed Steps")+ labs(title= "Total numbers of Steps per day (missing data imputed)")
+
+new.steps <- tapply(new$steps, new$date, FUN = sum, na.rm = TRUE)
+new$date <- ymd(new$date)
+mean(new.steps)
+median(new.steps)
+```
+
+
+
+#Do these steps differ?
+
+```{R}
+mean(total.steps)==mean(new.steps)
+median(total.steps)==median(new.steps)
+
+summary(total.steps)
+summary(new.steps)
+
+```
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+```{R}
+##Pt3 weekdays vs weekends
+
+new$daysOfWeek <- factor(weekdays(new$date))
+levels(new$daysOfWeek)
+
+levels(new$daysOfWeek) <- list(weekday = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday"),
+weekend = c("Saturday", "Sunday"))
+table(new$daysOfWeek)
+
+##Plotting weekend and weekday steps at each interval.
+library(lattice)
+meanSteps <- aggregate(new$steps, list(as.numeric(new$interval),new$daysOfWeek),        FUN = "mean")
+names(meanSteps) <- c("interval","weekDays", "avgSteps")
+
+xyplot(meanSteps$avgSteps ~ meanSteps$interval | meanSteps$weekDays, 
+       layout = c(1, 2), type = "l", 
+       xlab = "Interval", ylab = "Number of steps")
+
+```
+
+
