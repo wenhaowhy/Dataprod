@@ -1,0 +1,25 @@
+---
+title: "Predictions of MPG"
+author: "Wenhao Y"
+date: "April 11, 2016"
+output: md_document
+---
+
+Introduction
+This shiny app allows for a basic prediction of gas efficiency (measured by miles/gallon) by a few simple factors such as the number of cylinders, displacement, horsepower, weight, acceleration, year of make, etc.
+
+
+
+Algorithm
+
+```{r}
+library(RCurl)
+library(caret)
+
+mpg <- read.csv("C:/Users/sharon/Desktop/mpg.csv", text = mpg)
+modFit <- train(mpg ~ cyl + disp + horse + weight + accel + year + origin, method="glm", data=mpg)
+
+This GLM model has a $RMSE$ of 3.35, and an $R^2$ of 0.818. 
+
+
+```
